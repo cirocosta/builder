@@ -69,6 +69,8 @@ CONTEXT=${CONTEXT:-.}
 DOCKERFILE=${DOCKERFILE:-$CONTEXT/Dockerfile}
 TARGET=${TARGET:-}
 TARGET_FILE=${TARGET_FILE:-}
+PLATFORM=${PLATFORM:-}
+PLATFORM_FILE=${PLATFORM_FILE:-}
 BUILD_ARGS_OPT=$(env | awk '/BUILD_ARG_/ {gsub(/BUILD_ARG_/, "--build-arg "); printf "%s ",$0}')
 BUILD_ARGS_FILE=${BUILD_ARGS_FILE:-}
 
@@ -94,6 +96,18 @@ if [ -n "$TARGET_FILE" ]; then
   target_arg="--target $(cat $TARGET_FILE)"
 elif [ -n "$TARGET" ]; then
   target_arg="--target $TARGET"
+fi
+
+
+platform_arg=""
+if [ -n "$PLATFORM_FILE" ]; then
+  if [ ! -f "$PLATFORM_FILE" ]; then
+    echo "platform file '$PLATFORM_FILE' does not exist"
+    exit 1
+  fi
+  platform_arg="--platform $(cat $PLATFORM_FILE)"
+elif [ -n "$PLATFORM" ]; then
+  platform_arg="--platform $PLATFORM"
 fi
 
 
@@ -129,7 +143,7 @@ if [ -e ./cache/whiteouts ]; then
 fi
 
 progress "building"
-img build -s /scratch/state -t $REPOSITORY:$tag_name -f $DOCKERFILE $target_arg $build_args $CONTEXT
+img build -s /scratch/state -t $REPOSITORY:$tag_name -f $DOCKERFILE $target_arg $platform_arg $build_args $CONTEXT
 
 if [ -d ./cache ]; then
   progress "syncing state to cache"
